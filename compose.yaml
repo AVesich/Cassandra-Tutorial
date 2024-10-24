@@ -1,0 +1,45 @@
+services:
+  cassandra-1:
+    container_name: tutorial-cassandra-1
+    image: "cassandra:5.0.1"
+    ports:
+     - "9042"
+     - ./node-1/cassandra.yaml:/etc/cassandra/cassandra.yaml
+     - ./node-1/cassandra-env.sh:/etc/cassandra/cassandra-env.sh
+     - ./node-1/cassandra-rackdc.properties:/etc/cassandra/cassandra-rackdc.properties
+     - ./node-1/data:/var/lib/cassandra
+  cassandra-2:
+    container_name: tutorial-cassandra-2
+    image: "cassandra:5.0.1"
+    ports:
+     - "9042"
+     - ./node-2/cassandra.yaml:/etc/cassandra/cassandra.yaml
+     - ./node-2/cassandra-env.sh:/etc/cassandra/cassandra-env.sh
+     - ./node-2/cassandra-rackdc.properties:/etc/cassandra/cassandra-rackdc.properties
+     - ./node-2/data:/var/lib/cassandra
+    environment:
+      CASSANDRA_SEEDS: cassandra-1
+  cassandra-3:
+    container_name: tutorial-cassandra-3
+    image: "cassandra:5.0.1"
+    ports:
+     - "9042"
+    volumes:
+     - ./node-3/cassandra.yaml:/etc/cassandra/cassandra.yaml
+     - ./node-3/cassandra-env.sh:/etc/cassandra/cassandra-env.sh
+     - ./node-3/cassandra-rackdc.properties:/etc/cassandra/cassandra-rackdc.properties
+     - ./node-3/data:/var/lib/cassandra
+    environment:
+      CASSANDRA_SEEDS: cassandra-1
+  cassandra-init-1:
+    container_name: cassandra-init-1
+    image: "bash:devel-alpine3.20"
+    depends_on:
+     - cassandra-1
+     - cassandra-2
+     - cassandra-3
+    restart: "no"
+    entrypoint: ["/cassandra-init.sh"]
+    volumes:
+     - ./cassandra/cassandra-init.sh:/cassandra-init.sh
+     - ./cassandra/cassandra-setup.cql:/cassandra-setup.cql
