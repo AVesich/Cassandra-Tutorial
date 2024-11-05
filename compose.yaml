@@ -1,9 +1,32 @@
 services:
+  svelte:
+    container_name: tutorial-svelte-1
+    build: ./web/cass-demo
+    depends_on:
+      cassandra-1:
+        condition: service_healthy
+      cassandra-2:
+        condition: service_healthy
+      cassandra-3:
+        condition: service_healthy
+    ports:
+      - "5173:5173"
+    develop:
+      watch:
+        - action: sync
+          path: ./web/cass-demo
+          target: /app
   cassandra-1:
     container_name: tutorial-cassandra-1
     image: "cassandra:5.0.1"
     ports:
      - "9042"
+    healthcheck:
+      test: ["CMD-SHELL", "[ $$(nodetool statusgossip) = running ]"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    volumes:
      - ./node-1/cassandra.yaml:/etc/cassandra/cassandra.yaml
      - ./node-1/cassandra-env.sh:/etc/cassandra/cassandra-env.sh
      - ./node-1/cassandra-rackdc.properties:/etc/cassandra/cassandra-rackdc.properties
@@ -13,6 +36,12 @@ services:
     image: "cassandra:5.0.1"
     ports:
      - "9042"
+    healthcheck:
+      test: ["CMD-SHELL", "[ $$(nodetool statusgossip) = running ]"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    volumes:
      - ./node-2/cassandra.yaml:/etc/cassandra/cassandra.yaml
      - ./node-2/cassandra-env.sh:/etc/cassandra/cassandra-env.sh
      - ./node-2/cassandra-rackdc.properties:/etc/cassandra/cassandra-rackdc.properties
@@ -24,6 +53,11 @@ services:
     image: "cassandra:5.0.1"
     ports:
      - "9042"
+    healthcheck:
+      test: ["CMD-SHELL", "[ $$(nodetool statusgossip) = running ]"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
     volumes:
      - ./node-3/cassandra.yaml:/etc/cassandra/cassandra.yaml
      - ./node-3/cassandra-env.sh:/etc/cassandra/cassandra-env.sh
@@ -32,8 +66,8 @@ services:
     environment:
       CASSANDRA_SEEDS: cassandra-1
   cassandra-init-1:
-    container_name: cassandra-init-1
-    image: "bash:devel-alpine3.20"
+    container_name: tutorial-cassandra-init-1
+    image: "cassandra:5.0.1"
     depends_on:
      - cassandra-1
      - cassandra-2
